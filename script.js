@@ -12,20 +12,25 @@ function isValidClub(value) {
 
   if (!v) return false;
 
-  // Reject times like 1:04.72 or 37.99
+  // reject obvious junk starters
+  if (/^[-+]/.test(v)) return false;
+
+  // reject pure times or time-like strings
+  if (/\d+:\d+\.\d+/.test(v)) return false;
   if (/^\d+\.\d+$/.test(v)) return false;
-  if (/^\d+:\d+\.\d+$/.test(v)) return false;
 
-  // Reject splits like +0.45
-  if (/^\+\s*\d+(\.\d+)?$/.test(v)) return false;
+  // reject reaction-time / split-looking values
+  if (/^\+?\s*\d+(\.\d+)?$/.test(v)) return false;
 
-  // Reject pure numbers
-  if (/^\d+$/.test(v)) return false;
+  // reject age/group-like values
+  if (/^\d{1,3}\/\d{1,3}/.test(v)) return false;
+  if (/^\d{1,3}\+$/.test(v)) return false;
 
-  // Reject obvious garbage placeholders
-  if (v === "-" || v === "--") return false;
+  // reject anything containing digits at all
+  // real club names here should basically be text only
+  if (/\d/.test(v)) return false;
 
-  // Reject very short junk
+  // reject tiny junk
   if (v.length < 3) return false;
 
   return true;
@@ -108,12 +113,23 @@ function normaliseText(value) {
 }
 
 function getRowClub(row) {
-  const club = row.club_normalized || row.club_raw || '';
-  return isValidClub(club) ? club : '';
+  const candidates = [
+    row.club_normalized,
+    row.club_raw
+  ];
+
+  for (const candidate of candidates) {
+    if (isValidClub(candidate)) {
+      return String(candidate).trim();
+    }
+  }
+
+  return '';
 }
 
 function getRowAgeGroup(row) {
-  return cleanAgeGroup(row.age_group || row.event_group_raw || '');
+  const cleaned = cleanAgeGroup(row.age_group || row.event_group_raw || '');
+  return cleaned || '';
 }
 
 function matchesFilters(row) {
@@ -171,7 +187,7 @@ function renderTable() {
       fragment.querySelector('[data-key="event_name"]').textContent = row.event_name ?? '';
       fragment.querySelector('[data-key="age_group"]').textContent = getRowAgeGroup(row) ?? '';
       fragment.querySelector('[data-key="place_raw"]').textContent = row.place_raw ?? '';
-      fragment.querySelector('[data-key="name_raw"]').textContent = row.name_raw ?? '';
+      fragment.querySelector('[data-key="name_raw"]').textContent = String(row.name_raw || '').trim();
       fragment.querySelector('[data-key="club_raw"]').textContent = getRowClub(row) ?? '';
       fragment.querySelector('[data-key="time_raw"]').textContent = row.time_raw ?? '';
       fragment.querySelector('[data-key="status"]').textContent = row.status ?? '';
