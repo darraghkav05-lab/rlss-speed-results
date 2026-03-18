@@ -5,6 +5,72 @@ const state = {
   pageSize: 50,
 };
 
+function isValidClub(value) {
+  if (!value) return false;
+
+  const v = String(value).trim();
+
+  if (!v) return false;
+
+  // Reject times like 1:04.72 or 37.99
+  if (/^\d+\.\d+$/.test(v)) return false;
+  if (/^\d+:\d+\.\d+$/.test(v)) return false;
+
+  // Reject splits like +0.45
+  if (/^\+\s*\d+(\.\d+)?$/.test(v)) return false;
+
+  // Reject pure numbers
+  if (/^\d+$/.test(v)) return false;
+
+  // Reject obvious garbage placeholders
+  if (v === "-" || v === "--") return false;
+
+  // Reject very short junk
+  if (v.length < 3) return false;
+
+  return true;
+}
+
+function cleanAgeGroup(value) {
+  if (!value) return null;
+
+  let v = String(value).trim();
+
+  // normalize spacing
+  v = v.replace(/\s+/g, " ");
+
+  // common replacements
+  v = v.replace(/Yrs\/Over/gi, "+");
+  v = v.replace(/Yrs\/Ov/gi, "+");
+  v = v.replace(/Yrs/gi, "");
+  v = v.replace(/Age Group/gi, "");
+  v = v.replace(/Years\/Over/gi, "+");
+  v = v.replace(/Years/gi, "");
+
+  // remove spaces
+  v = v.replace(/\s+/g, "");
+
+  // Convert things like 15/Over → 15+
+  v = v.replace(/\/Over/gi, "+");
+  v = v.replace(/\/Ov/gi, "+");
+
+  // convert leading zero versions like 015+ -> 15+, 019+ -> 19+
+  if (/^0\d{2}\+$/.test(v)) {
+    v = String(parseInt(v, 10)) + "+";
+  }
+
+  // convert things like 012+ -> 12+
+  if (/^0\d{1,2}\+$/.test(v)) {
+    v = String(parseInt(v, 10)) + "+";
+  }
+
+  // valid formats only
+  if (/^\d{1,2}\/\d{1,2}$/.test(v)) return v;
+  if (/^\d{1,3}\+$/.test(v)) return v;
+
+  return null;
+}
+
 const els = {
   nameSearch: document.getElementById('nameSearch'),
   clubFilter: document.getElementById('clubFilter'),
@@ -22,7 +88,9 @@ const els = {
 };
 
 function uniqSorted(values) {
-  return [...new Set(values.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+  return [...new Set(values.filter(Boolean))].sort((a, b) =>
+    String(a).localeCompare(String(b), undefined, { numeric: true })
+  );
 }
 
 function fillSelect(select, values, placeholder) {
@@ -39,6 +107,15 @@ function normaliseText(value) {
   return String(value || '').toLowerCase().trim();
 }
 
+function getRowClub(row) {
+  const club = row.club_normalized || row.club_raw || '';
+  return isValidClub(club) ? club : '';
+}
+
+function getRowAgeGroup(row) {
+  return cleanAgeGroup(row.age_group || row.event_group_raw || '');
+}
+
 function matchesFilters(row) {
   const nameQuery = normaliseText(els.nameSearch.value);
   const club = els.clubFilter.value;
@@ -47,11 +124,18 @@ function matchesFilters(row) {
   const ageGroup = els.ageFilter.value;
   const status = els.statusFilter.value;
 
-  const nameMatch = !nameQuery || normaliseText(row.name_raw).includes(nameQuery) || normaliseText(row.name_normalized).includes(nameQuery);
-  const clubMatch = !club || row.club_normalized === club || row.club_raw === club;
+  const rowClub = getRowClub(row);
+  const rowAgeGroup = getRowAgeGroup(row);
+
+  const nameMatch =
+    !nameQuery ||
+    normaliseText(row.name_raw).includes(nameQuery) ||
+    normaliseText(row.name_normalized).includes(nameQuery);
+
+  const clubMatch = !club || rowClub === club;
   const yearMatch = !year || String(row.year) === String(year);
   const eventMatch = !eventName || row.event_name === eventName;
-  const ageMatch = !ageGroup || row.age_group === ageGroup;
+  const ageMatch = !ageGroup || rowAgeGroup === ageGroup;
   const statusMatch = !status || row.status === status;
 
   return nameMatch && clubMatch && yearMatch && eventMatch && ageMatch && statusMatch;
@@ -66,6 +150,7 @@ function applyFilters() {
 function renderTable() {
   const total = state.filteredResults.length;
   const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+
   if (state.page > totalPages) state.page = totalPages;
 
   const start = (state.page - 1) * state.pageSize;
@@ -81,14 +166,16 @@ function renderTable() {
   } else {
     for (const row of rows) {
       const fragment = els.rowTemplate.content.cloneNode(true);
+
       fragment.querySelector('[data-key="year"]').textContent = row.year ?? '';
       fragment.querySelector('[data-key="event_name"]').textContent = row.event_name ?? '';
-      fragment.querySelector('[data-key="age_group"]').textContent = row.age_group ?? row.event_group_raw ?? '';
+      fragment.querySelector('[data-key="age_group"]').textContent = getRowAgeGroup(row) ?? '';
       fragment.querySelector('[data-key="place_raw"]').textContent = row.place_raw ?? '';
       fragment.querySelector('[data-key="name_raw"]').textContent = row.name_raw ?? '';
-      fragment.querySelector('[data-key="club_raw"]').textContent = row.club_raw ?? '';
+      fragment.querySelector('[data-key="club_raw"]').textContent = getRowClub(row) ?? '';
       fragment.querySelector('[data-key="time_raw"]').textContent = row.time_raw ?? '';
       fragment.querySelector('[data-key="status"]').textContent = row.status ?? '';
+
       els.resultsBody.appendChild(fragment);
     }
   }
@@ -133,10 +220,41 @@ async function init() {
   const response = await fetch('results.json');
   state.allResults = await response.json();
 
-  fillSelect(els.clubFilter, uniqSorted(state.allResults.map(r => r.club_normalized || r.club_raw)), 'All clubs');
-  fillSelect(els.yearFilter, uniqSorted(state.allResults.map(r => r.year)), 'All years');
-  fillSelect(els.eventFilter, uniqSorted(state.allResults.map(r => r.event_name)), 'All events');
-  fillSelect(els.ageFilter, uniqSorted(state.allResults.map(r => r.age_group || r.event_group_raw)), 'All age groups');
+  const clubs = uniqSorted(
+    state.allResults
+      .map(getRowClub)
+      .filter(Boolean)
+  );
+
+  const years = uniqSorted(
+    state.allResults
+      .map(r => r.year)
+      .filter(Boolean)
+  );
+
+  const events = uniqSorted(
+    state.allResults
+      .map(r => r.event_name)
+      .filter(Boolean)
+  );
+
+  const ageGroups = uniqSorted(
+    state.allResults
+      .map(getRowAgeGroup)
+      .filter(Boolean)
+  );
+
+  const statuses = uniqSorted(
+    state.allResults
+      .map(r => r.status)
+      .filter(Boolean)
+  );
+
+  fillSelect(els.clubFilter, clubs, 'All clubs');
+  fillSelect(els.yearFilter, years, 'All years');
+  fillSelect(els.eventFilter, events, 'All events');
+  fillSelect(els.ageFilter, ageGroups, 'All age groups');
+  fillSelect(els.statusFilter, statuses, 'All statuses');
 
   state.filteredResults = [...state.allResults];
   wireUpEvents();
