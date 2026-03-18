@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RLSS Speeds Results</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <h1>RLSS Speeds Results</h1>
+      <p>Search by swimmer or club and see results across years. A rare moment where spreadsheets become useful.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="controls card">
+      <div class="controls-grid">
+        <label>
+          <span>Search swimmer</span>
+          <input id="nameSearch" type="text" placeholder="e.g. Heather Watson" />
+        </label>
+
+        <label>
+          <span>Club</span>
+          <select id="clubFilter">
+            <option value="">All clubs</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Year</span>
+          <select id="yearFilter">
+            <option value="">All years</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Event</span>
+          <select id="eventFilter">
+            <option value="">All events</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Age group</span>
+          <select id="ageFilter">
+            <option value="">All age groups</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select id="statusFilter">
+            <option value="">All statuses</option>
+            <option value="OK">OK</option>
+            <option value="DQ">DQ</option>
+            <option value="DNF">DNF</option>
+            <option value="DNC">DNC</option>
+            <option value="DNS">DNS</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="resetBtn" type="button">Reset filters</button>
+        <div class="summary">
+          <strong id="resultCount">0</strong> results shown
+        </div>
+      </div>
+    </section>
+
+    <section class="card table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Event</th>
+              <th>Age</th>
+              <th>Place</th>
+              <th>Name</th>
+              <th>Club</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="prevBtn" type="button">Previous</button>
+        <span id="pageInfo">Page 1</span>
+        <button id="nextBtn" type="button">Next</button>
+      </div>
+    </section>
+  </main>
+
+  <template id="rowTemplate">
+    <tr>
+      <td data-key="year"></td>
+      <td data-key="event_name"></td>
+      <td data-key="age_group"></td>
+      <td data-key="place_raw"></td>
+      <td data-key="name_raw"></td>
+      <td data-key="club_raw"></td>
+      <td data-key="time_raw"></td>
+      <td data-key="status"></td>
+    </tr>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
