@@ -7,71 +7,39 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="hero">
-    <div class="wrap">
-      <h1>RLSS Speeds Results</h1>
-      <p>Search by swimmer or club and see results across years. A rare moment where spreadsheets become useful.</p>
-    </div>
-  </header>
-
   <main class="wrap">
-    <section class="controls card">
-      <div class="controls-grid">
-        <label>
+    <section class="hero">
+      <h1>RLSS Speeds Results</h1>
+      <p>Search by swimmer name and view results across years. Miraculously more useful than a PDF.</p>
+    </section>
+
+    <section class="panel filters">
+      <div class="filter-grid">
+        <label class="field">
           <span>Search swimmer</span>
           <input id="nameSearch" type="text" placeholder="e.g. Heather Watson" />
         </label>
 
-        <label>
-          <span>Club</span>
-          <select id="clubFilter">
-            <option value="">All clubs</option>
-          </select>
-        </label>
-
-        <label>
+        <label class="field">
           <span>Year</span>
           <select id="yearFilter">
             <option value="">All years</option>
           </select>
         </label>
 
-        <label>
-          <span>Event</span>
-          <select id="eventFilter">
-            <option value="">All events</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Age group</span>
-          <select id="ageFilter">
-            <option value="">All age groups</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Status</span>
-          <select id="statusFilter">
-            <option value="">All statuses</option>
-            <option value="OK">OK</option>
-            <option value="DQ">DQ</option>
-            <option value="DNF">DNF</option>
-            <option value="DNC">DNC</option>
-            <option value="DNS">DNS</option>
-          </select>
-        </label>
+        <button id="resetBtn" class="reset-btn" type="button">Reset</button>
       </div>
 
-      <div class="actions">
-        <button id="resetBtn" type="button">Reset filters</button>
-        <div class="summary">
-          <strong id="resultCount">0</strong> results shown
+      <div class="summary-row">
+        <h2 id="profileTitle">Showing all swimmers</h2>
+        <div class="result-meta">
+          <strong id="resultCount">0</strong>
+          <span>results shown</span>
         </div>
       </div>
     </section>
 
-    <section class="card table-card">
+    <section class="panel table-panel">
       <div class="table-wrap">
         <table>
           <thead>
@@ -89,9 +57,10 @@
           <tbody id="resultsBody"></tbody>
         </table>
       </div>
-      <div class="pagination">
+
+      <div class="pager">
         <button id="prevBtn" type="button">Previous</button>
-        <span id="pageInfo">Page 1</span>
+        <span id="pageInfo">Page 1 of 1</span>
         <button id="nextBtn" type="button">Next</button>
       </div>
     </section>
