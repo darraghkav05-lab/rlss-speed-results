@@ -19,9 +19,8 @@ const els = {
 };
 
 function uniqSorted(values) {
-  return [...new Set(values.filter(Boolean))].sort((a, b) =>
-    String(a).localeCompare(String(b), undefined, { numeric: true })
-  );
+  return [...new Set(values.filter(v => v !== null && v !== undefined && v !== ''))]
+    .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
 }
 
 function fillSelect(select, values, placeholder) {
@@ -64,26 +63,11 @@ function cleanAgeGroup(value) {
 }
 
 function getRowName(row) {
-  const raw = String(row.name_normalized || row.name_raw || '').trim();
-  if (!raw) return '';
-
-  return raw
-    .replace(/\s+\d+\s+[A-Za-z].*$/, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+  return String(row.name || '').trim();
 }
 
 function getRowClub(row) {
-  const raw = String(row.club_normalized || row.club_raw || '').trim();
-
-  if (!raw) return '';
-  if (/^\d/.test(raw)) return '';
-  if (/^\+/.test(raw)) return '';
-  if (/^-/.test(raw)) return '';
-  if (/\d+:\d+\.\d+/.test(raw)) return '';
-  if (/^\d+\.\d+$/.test(raw)) return '';
-
-  return raw;
+  return String(row.club || '').trim();
 }
 
 function matchesFilters(row) {
@@ -104,11 +88,11 @@ function applyFilters() {
     .sort((a, b) => {
       if (String(a.year) !== String(b.year)) return Number(b.year) - Number(a.year);
 
-      const eventCompare = String(a.event_name || '').localeCompare(String(b.event_name || ''));
+      const eventCompare = String(a.event || '').localeCompare(String(b.event || ''));
       if (eventCompare !== 0) return eventCompare;
 
-      const placeA = Number(a.place_raw || 9999);
-      const placeB = Number(b.place_raw || 9999);
+      const placeA = Number(a.place ?? 9999);
+      const placeB = Number(b.place ?? 9999);
       return placeA - placeB;
     });
 
@@ -129,18 +113,18 @@ function renderTable() {
 
   if (!rows.length) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="8">No results found. Try a different spelling, because data cleaning remains a social failure.</td>`;
+    tr.innerHTML = '<td colspan="8">No results found. Try a different spelling.</td>';
     els.resultsBody.appendChild(tr);
   } else {
     for (const row of rows) {
       const fragment = els.rowTemplate.content.cloneNode(true);
       fragment.querySelector('[data-key="year"]').textContent = row.year ?? '';
-      fragment.querySelector('[data-key="event_name"]').textContent = row.event_name ?? '';
-      fragment.querySelector('[data-key="age_group"]').textContent = cleanAgeGroup(row.age_group || row.event_group_raw || '') ?? '';
-      fragment.querySelector('[data-key="place_raw"]').textContent = row.place_raw ?? '';
-      fragment.querySelector('[data-key="name_raw"]').textContent = getRowName(row) ?? '';
-      fragment.querySelector('[data-key="club_raw"]').textContent = getRowClub(row) ?? '';
-      fragment.querySelector('[data-key="time_raw"]').textContent = row.time_raw ?? '';
+      fragment.querySelector('[data-key="event"]').textContent = row.event ?? '';
+      fragment.querySelector('[data-key="age_group"]').textContent = cleanAgeGroup(row.age_group ?? '');
+      fragment.querySelector('[data-key="place"]').textContent = row.place ?? '';
+      fragment.querySelector('[data-key="name"]').textContent = getRowName(row);
+      fragment.querySelector('[data-key="club"]').textContent = getRowClub(row);
+      fragment.querySelector('[data-key="time"]').textContent = row.time ?? '';
       fragment.querySelector('[data-key="status"]').textContent = row.status ?? '';
       els.resultsBody.appendChild(fragment);
     }
@@ -184,15 +168,15 @@ function wireUpEvents() {
 }
 
 async function init() {
-  const response = await fetch('results.json');
+  const response = await fetch('./results.json');
+
+  if (!response.ok) {
+    throw new Error(`Failed to load results.json: ${response.status}`);
+  }
+
   state.allResults = await response.json();
 
-  const years = uniqSorted(
-    state.allResults
-      .map(r => r.year)
-      .filter(Boolean)
-  );
-
+  const years = uniqSorted(state.allResults.map(r => r.year));
   fillSelect(els.yearFilter, years, 'All years');
 
   state.filteredResults = [...state.allResults];
@@ -202,5 +186,5 @@ async function init() {
 
 init().catch(err => {
   console.error(err);
-  els.resultsBody.innerHTML = `<tr><td colspan="8">Failed to load results.json. Check the file is in the repo root and GitHub Pages is serving it properly.</td></tr>`;
+  els.resultsBody.innerHTML = '<tr><td colspan="8">Failed to load results.json. Make sure index.html, style.css, script.js and results.json are all in the same GitHub repo folder.</td></tr>';
 });
