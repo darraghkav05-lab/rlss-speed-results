@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RLSS Speeds Results</title>
+  <title>RLSS Swimmer Profiles</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="wrap">
     <section class="hero">
-      <h1>RLSS Speeds Results</h1>
-      <p>Search by swimmer name and browse results across years without digging through PDFs like it's a medieval punishment.</p>
+      <p class="eyebrow">RLSS Speeds Archive</p>
+      <h1>Swimmer Profile Search</h1>
+      <p>Search by swimmer name and year to browse individual results without digging through old PDFs.</p>
     </section>
 
     <section class="panel filters">
@@ -31,7 +32,11 @@
       </div>
 
       <div class="summary-row">
-        <h2 id="profileTitle">Showing all swimmers</h2>
+        <div>
+          <h2 id="profileTitle">Showing all swimmers</h2>
+          <p id="profileHint">Type a swimmer name to narrow the archive.</p>
+        </div>
+
         <div class="result-meta">
           <strong id="resultCount">0</strong>
           <span>results shown</span>
@@ -47,11 +52,9 @@
               <th>Year</th>
               <th>Event</th>
               <th>Age Group</th>
-              <th>Place</th>
               <th>Name</th>
               <th>Club</th>
-              <th>Time</th>
-              <th>Status</th>
+              <th>Final Time</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>
@@ -71,11 +74,9 @@
       <td data-key="year"></td>
       <td data-key="event"></td>
       <td data-key="age_group"></td>
-      <td data-key="place"></td>
       <td data-key="name"></td>
       <td data-key="club"></td>
-      <td data-key="time"></td>
-      <td data-key="status"></td>
+      <td data-key="final_time"></td>
     </tr>
   </template>
 
